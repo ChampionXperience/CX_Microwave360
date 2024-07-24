@@ -10,7 +10,7 @@ let startX = 0;
 let currentImageIndex = 1;
 
 function work(value) {
-    image.src = `CX/CX_` + value + `.jpg`;
+    image.src = `CX_Microwave/CX_Microwave_` + value + `.jpg`;
     image.setAttribute('data-index', value);
 }
 
