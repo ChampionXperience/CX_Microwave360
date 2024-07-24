@@ -1,65 +1,71 @@
+let range = document.getElementById('range');
+let image = document.getElementById('target');
 
-function work(event, target) {
-  var value = event.target.value;
-  target.src = 'CX/CX_Microwave_' + value + '.jpg';
+let totalImages = 72; // Total number of images
+range.max = totalImages;
+
+let changeDelay = 50; // Default delay in milliseconds between image changes
+let isMouseDown = false;
+let startX = 0;
+let currentImageIndex = 1;
+
+function work(value) {
+    image.src = `CX/CX_` + value + `.jpg`;
+    image.setAttribute('data-index', value);
 }
 
-var range = document.getElementById('range');
-var image = document.getElementById('target');
-let changeDelay = 50; // Default delay in milliseconds between image changes
-let lastChangeTime = 0; // Last time the image was changed
-let isMouseDown = false; // Check if the left mouse button is pressed
-let startX = 0; // Store the starting X coordinate of mouse movement
-let currentImageIndex = 1; // Track the current image index
-
 range.addEventListener("input", (event) => {
-  const currentTime = Date.now();
-  if (currentTime - lastChangeTime > changeDelay) {
-      work(event, image);
-      lastChangeTime = currentTime;
-      currentImageIndex = event.target.value; // Update the current image index
-  }
+    work(event.target.value);
+    currentImageIndex = event.target.value;
 });
 
 // Function to set the change delay
 function setChangeDelay(newDelay) {
-  changeDelay = newDelay;
+    changeDelay = newDelay;
 }
 
 // Mouse event handlers
 function handleMouseMove(event) {
-  if (!isMouseDown) return;
+    if (!isMouseDown) return;
 
-  const currentTime = Date.now();
-  if (currentTime - lastChangeTime > changeDelay) {
-      const dx = event.clientX - startX;
-      if (dx > 0) {
-          range.value = (parseInt(range.value) % range.max) + 1;
-      } else {
-          range.value = (parseInt(range.value) - 1 + parseInt(range.max)) % range.max;
-          if (range.value === 0) range.value = range.max;
-      }
-      work(null, image);
-      startX = event.clientX;
-      lastChangeTime = currentTime;
-      currentImageIndex = range.value; // Update the current image index
-  }
+    const dx = event.clientX - startX;
+    if (Math.abs(dx) > 20) { // Threshold for detecting significant movement
+        if (dx > 0) {
+            currentImageIndex = (parseInt(currentImageIndex) % totalImages) + 1;
+        } else {
+            currentImageIndex = (parseInt(currentImageIndex) - 1 + totalImages) % totalImages;
+            if (currentImageIndex === 0) currentImageIndex = totalImages;
+        }
+        range.value = currentImageIndex;
+        work(currentImageIndex);
+        startX = event.clientX;
+    }
 }
 
 function handleMouseDown(event) {
-  if (event.button !== 0) return;
+    if (event.button !== 0) return;
 
-  isMouseDown = true;
-  startX = event.clientX;
+    isMouseDown = true;
+    startX = event.clientX;
 }
 
 function handleMouseUp() {
-  isMouseDown = false;
-  range.value = currentImageIndex; // Ensure the range input is synced with the current image index
+    isMouseDown = false;
 }
 
-document.addEventListener('mousemove', handleMouseMove);
-document.addEventListener('mousedown', handleMouseDown);
-document.addEventListener('mouseup', handleMouseUp);
+image.addEventListener('mousemove', handleMouseMove);
+image.addEventListener('mousedown', handleMouseDown);
+image.addEventListener('mouseup', handleMouseUp);
 
-
+// Zoom functionality
+let zoomLevel = 1;
+document.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    if (event.deltaY < 0) {
+        zoomLevel += 0.1;
+    } else {
+        zoomLevel -= 0.1;
+    }
+    zoomLevel = Math.min(Math.max(1, zoomLevel), 1.3); // Limit the zoom level to prevent shrinking below original size
+    image.style.transform = `scale(${zoomLevel})`;
+}, { passive: false });
